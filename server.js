@@ -34,12 +34,25 @@ app.post('/tasks', async function(req, res) {
     res.send(task);
 });
 
-app.patch('/tasks/:id', async function(req, res) {
+app.patch('/tasks/:id', async function(req, res){
     const collection = await getDbCollection('mongodb://127.0.0.1', 'todoapp', 'tasks');
-    const data = await collection.updateOne({_id: new ObjectId(req.params.id)}, {'$set': req.body});
-    res.send({});
-});
+    const taskId = req.params.id;
+    const updateData = req.body;
 
+    try {
+        const result = await collection.updateOne(
+            { _id: new ObjectId(taskId) },
+            { '$set': updateData }
+        );
+        if (result.matchedCount === 1) {
+            res.status(200).send({});
+        } else {
+            res.status(404).send({ message: 'Task not found' });
+        }
+    } catch (error) {
+        res.status(500).send({ message: 'Internal server error' });
+    }
+});
 app.delete('/tasks/:id', async function(req, res) {
     const collection = await getDbCollection('mongodb://127.0.0.1', 'todoapp', 'tasks');
     await collection.deleteOne({_id: new ObjectId(req.params.id)});
